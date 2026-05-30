@@ -1,0 +1,368 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyP62u6OyDl/lpHBG+QxH+iG",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/Mahendran-v2/priceprediction/blob/main/prodigyproject\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "5f4a5a71"
+      },
+      "source": [
+        "import requests\n",
+        "\n",
+        "# Download the dataset from a public URL\n",
+        "url = \"https://raw.githubusercontent.com/ageron/handson-ml2/master/datasets/housing/housing.tgz\"\n",
+        "output_path = \"housing.tgz\"\n",
+        "\n",
+        "response = requests.get(url, stream=True)\n",
+        "response.raise_for_status()  # Raise an exception for HTTP errors\n",
+        "\n",
+        "with open(output_path, \"wb\") as f:\n",
+        "    for chunk in response.iter_content(chunk_size=8192):\n",
+        "        f.write(chunk)\n",
+        "\n",
+        "print(f\"Downloaded {output_path}\")"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "e8257fb1"
+      },
+      "source": [
+        "# Verify the download\n",
+        "!ls -l housing.tgz"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "ec884c9e"
+      },
+      "source": [
+        "# Extract the contents of the tgz file\n",
+        "!tar -xzf housing.tgz"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "294d7576"
+      },
+      "source": [
+        "# List the contents of the extracted directory (housing) to verify\n",
+        "!ls -l housing/"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "86d3d13f"
+      },
+      "source": [
+        "# Unzip the house price dataset\n",
+        "!unzip \"/content/house-prices-advanced-regression-techniques.zip\" -d \"/content/house_prices_dataset\""
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "2a2d70fa"
+      },
+      "source": [
+        "# List the contents of the extracted directory to verify\n",
+        "!ls -l \"/content/house_prices_dataset\""
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "7ede4bfe"
+      },
+      "source": [
+        "# List all files in the current directory to find where 'housing.tgz' contents might have landed\n",
+        "!ls -l"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "fae703b3"
+      },
+      "source": [
+        "import pandas as pd\n",
+        "\n",
+        "# Load the housing.csv file\n",
+        "housing_df = pd.read_csv('housing.csv')\n",
+        "\n",
+        "# Display the first few rows and information about the DataFrame\n",
+        "display(housing_df.head())\n",
+        "display(housing_df.info())"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "83c543b1"
+      },
+      "source": [
+        "import matplotlib.pyplot as plt\n",
+        "import seaborn as sns\n",
+        "\n",
+        "# Load the train.csv file from the house_prices_dataset directory\n",
+        "train_df = pd.read_csv('/content/house_prices_dataset/train.csv')\n",
+        "\n",
+        "# Display the first few rows and information about the DataFrame to check columns\n",
+        "display(train_df.head())\n",
+        "display(train_df.info())"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "66935833"
+      },
+      "source": [
+        "# Create a scatter plot of GrLivArea vs SalePrice\n",
+        "plt.figure(figsize=(10, 6))\n",
+        "sns.scatterplot(x='GrLivArea', y='SalePrice', data=train_df)\n",
+        "plt.title('Ground Living Area vs. Sale Price')\n",
+        "plt.xlabel('Ground Living Area (square feet)')\n",
+        "plt.ylabel('Sale Price')\n",
+        "plt.grid(True)\n",
+        "plt.show()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "826fd333"
+      },
+      "source": [
+        "from sklearn.model_selection import train_test_split\n",
+        "from sklearn.linear_model import LinearRegression\n",
+        "from sklearn.metrics import mean_squared_error, r2_score\n",
+        "import numpy as np\n",
+        "\n",
+        "# Feature Engineering: Create TotalBaths\n",
+        "train_df['TotalBaths'] = train_df['FullBath'] + 0.5 * train_df['HalfBath'] + \\\n",
+        "                         train_df['BsmtFullBath'] + 0.5 * train_df['BsmtHalfBath']\n",
+        "\n",
+        "# Select features (X) and target (y)\n",
+        "features = ['GrLivArea', 'BedroomAbvGr', 'TotalBaths']\n",
+        "X = train_df[features]\n",
+        "y = train_df['SalePrice']\n",
+        "\n",
+        "# Handle missing values (if any) - A simple strategy is to fill with the mean\n",
+        "# In this specific dataset, for the chosen features, there are no missing values, but it's good practice.\n",
+        "X = X.fillna(X.mean())\n",
+        "\n",
+        "# Split data into training and testing sets\n",
+        "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n",
+        "\n",
+        "# Initialize and train the Linear Regression model\n",
+        "model = LinearRegression()\n",
+        "model.fit(X_train, y_train)\n",
+        "\n",
+        "# Make predictions on the test set\n",
+        "y_pred = model.predict(X_test)\n",
+        "\n",
+        "# Evaluate the model\n",
+        "mse = mean_squared_error(y_test, y_pred)\n",
+        "rmse = np.sqrt(mse)\n",
+        "r2 = r2_score(y_test, y_pred)\n",
+        "\n",
+        "print(f\"Model Coefficients: {model.coef_}\")\n",
+        "print(f\"Model Intercept: {model.intercept_}\")\n",
+        "print(f\"Mean Squared Error (MSE): {mse:.2f}\")\n",
+        "print(f\"Root Mean Squared Error (RMSE): {rmse:.2f}\")\n",
+        "print(f\"R-squared (R2): {r2:.2f}\")"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "21958199"
+      },
+      "source": [
+        "plt.figure(figsize=(10, 7))\n",
+        "sns.scatterplot(x=y_test, y=y_pred)\n",
+        "plt.plot([y.min(), y.max()], [y.min(), y.max()], 'r--', lw=2) # Diagonal line for perfect prediction\n",
+        "plt.xlabel('Actual SalePrice')\n",
+        "plt.ylabel('Predicted SalePrice')\n",
+        "plt.title('Actual vs. Predicted SalePrice (Test Set)')\n",
+        "plt.grid(True)\n",
+        "plt.show()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "93a5f894"
+      },
+      "source": [
+        "# Add 'OverallQual' to the features list\n",
+        "new_features = ['GrLivArea', 'BedroomAbvGr', 'TotalBaths', 'OverallQual']\n",
+        "X_new = train_df[new_features]\n",
+        "y_new = train_df['SalePrice']\n",
+        "\n",
+        "# Handle missing values (if any) - Fill with the mean\n",
+        "X_new = X_new.fillna(X_new.mean())\n",
+        "\n",
+        "# Split data into training and testing sets for the new model\n",
+        "X_train_new, X_test_new, y_train_new, y_test_new = train_test_split(X_new, y_new, test_size=0.2, random_state=42)\n",
+        "\n",
+        "# Initialize and train the new Linear Regression model\n",
+        "model_new = LinearRegression()\n",
+        "model_new.fit(X_train_new, y_train_new)\n",
+        "\n",
+        "# Make predictions on the new test set\n",
+        "y_pred_new = model_new.predict(X_test_new)\n",
+        "\n",
+        "# Evaluate the new model\n",
+        "mse_new = mean_squared_error(y_test_new, y_pred_new)\n",
+        "rmse_new = np.sqrt(mse_new)\n",
+        "r2_new = r2_score(y_test_new, y_pred_new)\n",
+        "\n",
+        "print(\"--- Original Model Performance ---\")\n",
+        "print(f\"Original MSE: {mse:.2f}\")\n",
+        "print(f\"Original RMSE: {rmse:.2f}\")\n",
+        "print(f\"Original R-squared: {r2:.2f}\")\n",
+        "print(\"\\n--- New Model Performance (with OverallQual) ---\")\n",
+        "print(f\"New Model Coefficients: {model_new.coef_}\")\n",
+        "print(f\"New Model Intercept: {model_new.intercept_}\")\n",
+        "print(f\"New MSE: {mse_new:.2f}\")\n",
+        "print(f\"New RMSE: {rmse_new:.2f}\")\n",
+        "print(f\"New R-squared: {r2_new:.2f}\")"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "d682c218"
+      },
+      "source": [
+        "from sklearn.model_selection import KFold, cross_val_score\n",
+        "\n",
+        "# Define the features for the updated model\n",
+        "cv_features = ['GrLivArea', 'BedroomAbvGr', 'TotalBaths', 'OverallQual']\n",
+        "X_cv = train_df[cv_features]\n",
+        "y_cv = train_df['SalePrice']\n",
+        "\n",
+        "# Handle missing values (if any) - Fill with the mean\n",
+        "X_cv = X_cv.fillna(X_cv.mean())\n",
+        "\n",
+        "# Initialize the Linear Regression model\n",
+        "cv_model = LinearRegression()\n",
+        "\n",
+        "# Set up K-Fold Cross-Validation\n",
+        "kf = KFold(n_splits=5, shuffle=True, random_state=42) # Using 5 folds\n",
+        "\n",
+        "# Perform cross-validation for R-squared\n",
+        "r2_scores = cross_val_score(cv_model, X_cv, y_cv, cv=kf, scoring='r2')\n",
+        "\n",
+        "# Perform cross-validation for Mean Squared Error (negative because cross_val_score maximizes the score)\n",
+        "mse_scores = -cross_val_score(cv_model, X_cv, y_cv, cv=kf, scoring='neg_mean_squared_error')\n",
+        "rmse_scores = np.sqrt(mse_scores)\n",
+        "\n",
+        "print(\"\\n--- Cross-Validation Results (with OverallQual) ---\")\n",
+        "print(f\"R-squared scores for each fold: {r2_scores}\")\n",
+        "print(f\"Average R-squared: {np.mean(r2_scores):.2f} (+/- {np.std(r2_scores):.2f})\")\n",
+        "print(f\"MSE scores for each fold: {mse_scores}\")\n",
+        "print(f\"Average MSE: {np.mean(mse_scores):.2f} (+/- {np.std(mse_scores):.2f})\")\n",
+        "print(f\"RMSE scores for each fold: {rmse_scores}\")\n",
+        "print(f\"Average RMSE: {np.mean(rmse_scores):.2f} (+/- {np.std(rmse_scores):.2f})\")"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "0ae3024c"
+      },
+      "source": [
+        "Now, let's use the `model_new` (which includes 'GrLivArea', 'BedroomAbvGr', 'TotalBaths', and 'OverallQual') to predict the `SalePrice` and add these predictions as a new 'feature' (a column) to our `train_df`."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "3be146b0"
+      },
+      "source": [
+        "# Define the features used by model_new\n",
+        "prediction_features = ['GrLivArea', 'BedroomAbvGr', 'TotalBaths', 'OverallQual']\n",
+        "\n",
+        "# Ensure 'TotalBaths' is created in train_df before prediction if not already present\n",
+        "if 'TotalBaths' not in train_df.columns:\n",
+        "    train_df['TotalBaths'] = train_df['FullBath'] + 0.5 * train_df['HalfBath'] + \\\n",
+        "                             train_df['BsmtFullBath'] + 0.5 * train_df['BsmtHalfBath']\n",
+        "\n",
+        "# Prepare the data for prediction using the same features as model_new\n",
+        "X_predict = train_df[prediction_features]\n",
+        "\n",
+        "# Handle missing values in prediction_features using the mean strategy, similar to training\n",
+        "X_predict = X_predict.fillna(X_predict.mean())\n",
+        "\n",
+        "# Generate predictions using the trained model_new\n",
+        "train_df['PredictedSalePrice'] = model_new.predict(X_predict)\n",
+        "\n",
+        "# Display the first few rows with the new predicted price column\n",
+        "display(train_df[['GrLivArea', 'BedroomAbvGr', 'TotalBaths', 'OverallQual', 'SalePrice', 'PredictedSalePrice']].head())"
+      ],
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
